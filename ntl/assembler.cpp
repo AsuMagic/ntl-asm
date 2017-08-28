@@ -37,7 +37,7 @@ namespace ntl
 		return _program.back();
 	}
 	
-	void Assembler::contextualize(const Token& tok, const std::string text) const
+	void Assembler::note(const Token& tok, const std::string text) const
 	{
 		const std::size_t begin_off = std::distance(begin(_program[tok.line]), tok.itb),
 						  token_len = std::distance(tok.itb, tok.ite);
@@ -123,16 +123,16 @@ namespace ntl
 				case TokenType::EndOfLine: {
 				} break;
 				case TokenType::Unknown: {
-					contextualize(token, "Error: Unknown token");
+					note(token, "Error: Unknown token");
 				} return;
 				case TokenType::Comma: {
-					contextualize(token, "Error: Assembler directives are not supported yet");
+					note(token, "Error: Assembler directives are not supported yet");
 				} return;
 				case TokenType::Identifier: {
 					auto opit = opcode_match.find(token.str());
 					if (opit == end(opcode_match))
 					{
-						contextualize(token, "Error: Expected an instruction");
+						note(token, "Error: Expected an instruction");
 						return;
 					}
 					
@@ -147,7 +147,7 @@ namespace ntl
 						
 						if (opinfo.type == OOB_OPERAND)
 						{
-							contextualize(operand, "Error: Too much operands to instruction '" + token.str() + "'");
+							note(operand, "Error: Too much operands to instruction '" + token.str() + "'");
 							return;
 						}
 						
@@ -158,18 +158,18 @@ namespace ntl
 							{
 								if (opinfo.is_register())
 								{
-									contextualize(operand, "Error: Cannot use unrecognized identifier '" + operand.str() + "' as a register name");
+									note(operand, "Error: Cannot use unrecognized identifier '" + operand.str() + "' as a register name");
 									return;
 								}
 								
-								contextualize(operand, "Error: Macros are not implemented yet");
+								note(operand, "Error: Macros are not implemented yet");
 								return;
 							}
 							else
 							{
 								if (!opinfo.is_register())
 								{
-									contextualize(operand, "Error: Cannot use register name '" + operand.str() + "' as an immediate value");
+									note(operand, "Error: Cannot use register name '" + operand.str() + "' as an immediate value");
 									return;
 								}
 								
@@ -180,7 +180,7 @@ namespace ntl
 						{
 							if (opinfo.is_register())
 							{
-								contextualize(operand, "Error: Cannot use numeric value '" + operand.str() + "' as a register name");
+								note(operand, "Error: Cannot use numeric value '" + operand.str() + "' as a register name");
 								return;
 							}
 							
@@ -188,7 +188,7 @@ namespace ntl
 						}
 						else
 						{
-							contextualize(operand, "Error: Unexpected token '" + operand.str() + "' as an operand");
+							note(operand, "Error: Unexpected token '" + operand.str() + "' as an operand");
 							return;
 						}
 						
@@ -197,7 +197,7 @@ namespace ntl
 					
 					if (n != opit->second.operands.size())
 					{
-						contextualize(token, "Error: Missing operands to instruction '" + token.str() + "'");
+						note(token, "Error: Missing operands to instruction '" + token.str() + "'");
 						return;
 					}
 					
@@ -207,7 +207,7 @@ namespace ntl
 				} break;
 				case TokenType::Numeric:
 				default:
-					contextualize(token, "Error: Unexpected token '" + token.str() + "'.");
+					note(token, "Error: Unexpected token '" + token.str() + "'.");
 					return;
 				}
 				

@@ -54,7 +54,7 @@ namespace ntl
 		
 		const std::string& current_line() const;
 		
-		void contextualize(const Token& token, const std::string text) const;
+		void note(const Token& token, const std::string text) const;
 		
 		char read_char();
 		Token read_token();
