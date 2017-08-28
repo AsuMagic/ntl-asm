@@ -143,13 +143,13 @@ namespace ntl
 					std::size_t n = 0;
 					while (read_char(), (operand = read_token()))
 					{
-						OperandInfo opinfo = opit->second[n];
-						
-						if (opinfo.type == OOB_OPERAND)
+						if (n >= opit->second.operands.size())
 						{
 							note(operand, "Error: Too much operands to instruction '" + token.str() + "'");
 							return;
 						}
+						
+						OperandInfo opinfo = opit->second.operands[n];
 						
 						if (operand.type == TokenType::Identifier)
 						{

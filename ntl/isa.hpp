@@ -12,9 +12,7 @@ namespace ntl
 		R1 = 0,
 		R2,
 		R3,
-		IMM1,
-		
-		OOB_OPERAND
+		IMM1
 	};
 	
 	struct RegisterInfo
@@ -34,8 +32,6 @@ namespace ntl
 	{
 		const std::uint8_t opcode;
 		std::vector<OperandInfo> operands;
-		
-		OperandInfo operator[](const std::size_t i) const;
 	};
 
 	extern const std::unordered_map<std::string, OpcodeInfo> opcode_match;

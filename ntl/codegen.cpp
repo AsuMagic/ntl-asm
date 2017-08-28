@@ -14,7 +14,6 @@ namespace ntl
 		case R2:   instruction |= value << 12; break;
 		case R3:   instruction |= value << 16; break;
 		case IMM1: instruction |= value << 16; break;
-		case OOB_OPERAND: break;
 		};
 	}
 }

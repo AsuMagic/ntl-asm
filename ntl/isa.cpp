@@ -60,12 +60,4 @@ namespace ntl
 	{
 		return type != IMM1;
 	}
-	
-	OperandInfo OpcodeInfo::operator[](const std::size_t i) const
-	{
-		if (i >= operands.size())
-			return OperandInfo{OOB_OPERAND, ""};
-		
-		return operands[i];
-	}
 }
