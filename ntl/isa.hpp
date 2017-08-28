@@ -9,10 +9,7 @@ namespace ntl
 {
 	enum OperandType
 	{
-		R1 = 0,
-		R2,
-		R3,
-		IMM1
+		REG, IMM
 	};
 	
 	struct RegisterInfo
@@ -24,8 +21,6 @@ namespace ntl
 	{
 		OperandType type;
 		const char *const name = "";
-		
-		bool is_register() const;
 	};
 	
 	struct OpcodeInfo

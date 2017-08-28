@@ -13,7 +13,7 @@ namespace ntl
 		std::uint32_t instruction;
 		
 		Instruction(const std::uint8_t opcode);
-		void operand(const OperandType type, const std::uint32_t value);
+		void operand(const OperandType type, const std::uint32_t value, const std::size_t offset);
 	};
 }
 

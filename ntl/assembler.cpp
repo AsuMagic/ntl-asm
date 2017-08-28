@@ -17,17 +17,39 @@ namespace ntl
 		return type != TokenType::EndOfLine;
 	}
 	
-	bool Assembler::asm_isnotidentifier(const char c)
+	Register::Register(const std::string& name)
+	{
+		const auto regit = register_match.find(name);
+		info = ((regit != end(register_match)) ? &regit->second : nullptr);
+	}
+	
+	Register::operator const RegisterInfo*() const
+	{
+		return info;
+	}
+	
+	Opcode::Opcode(const std::string& name)
+	{
+		const auto opit = opcode_match.find(name);
+		info = ((opit != end(opcode_match)) ? &opit->second : nullptr);
+	}
+	
+	Opcode::operator const OpcodeInfo*() const
+	{
+		return info;
+	}
+	
+	bool asm_isnotidentifier(const char c)
 	{
 		return !(::isalnum(c) || (c == '-') || (c == '_'));
 	}
 	
-	bool Assembler::asm_isnotdigit(const char c)
+	bool asm_isnotdigit(const char c)
 	{
 		return !(::isdigit(c) || (::tolower(c) >= 'a' && ::tolower(c) <= 'z'));
 	}
 	
-	bool Assembler::asm_canendnumeric(const char c)
+	bool asm_canendnumeric(const char c)
 	{
 		return (asm_isnotdigit(c) || ::isspace(c) || (c == '#') || (c == EOF));
 	}
@@ -95,6 +117,48 @@ namespace ntl
 		return Token{TokenType::Unknown, _program.size() - 1, _itb, _ite};
 	}
 	
+	bool Assembler::encode_operand(const Token& token, const std::size_t n, const OperandInfo opinfo, Instruction& instruction)
+	{
+		if (opinfo.type == REG)
+		{
+			Register reg{token.str()};
+			if (!reg)
+			{
+				note(token, "Error: Invalid register.");
+				return false;
+			}
+			
+			instruction.operand(REG, reg.info->id, n);
+		}
+		else if (opinfo.type == IMM)
+		{
+			if (Register{token.str()} ||
+				Opcode  {token.str()})
+			{
+				note(token, "Error: Invalid immediate. Macro variable names are the only accepted identifiers for immediates.");
+				return false;
+			}
+			
+			if (token.type == TokenType::Identifier)
+			{
+				note(token, "Assembler Error: Unimplemented macro.");
+				return false;
+			}
+			else if (token.type == TokenType::Numeric)
+			{
+				// TODO check the integer size earlier to avoid smashing the rest of the instruction
+				instruction.operand(IMM, _last_integer, n);
+			}
+			else
+			{
+				note(token, "Error: Unexpected token.");
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
 	Assembler::Assembler(std::string fname) :
 		_source{fname},
 		_source_name{std::move(fname)}
@@ -120,84 +184,39 @@ namespace ntl
 			{
 				switch (token.type)
 				{
-				case TokenType::EndOfLine: {
-				} break;
-				case TokenType::Unknown: {
-					note(token, "Error: Unknown token");
-				} return;
 				case TokenType::Comma: {
-					note(token, "Error: Assembler directives are not supported yet");
+					note(token, "Assembler Error: Unimplemented macro.");
 				} return;
 				case TokenType::Identifier: {
-					auto opit = opcode_match.find(token.str());
-					if (opit == end(opcode_match))
+					Opcode op{token.str()};
+					if (!op)
 					{
-						note(token, "Error: Expected an instruction");
+						note(token, "Error: Not a valid opcode.");
 						return;
 					}
 					
-					Instruction ins{opit->second.opcode};
-										
+					Instruction ins{op.info->opcode};
 					Token operand;
 					
 					std::size_t n = 0;
 					while (read_char(), (operand = read_token()))
 					{
-						if (n >= opit->second.operands.size())
+						if (n >= op.info->operands.size())
 						{
-							note(operand, "Error: Too much operands to instruction '" + token.str() + "'");
+							note(operand, "Error: Too much operands to instruction.");
 							return;
 						}
 						
-						OperandInfo opinfo = opit->second.operands[n];
-						
-						if (operand.type == TokenType::Identifier)
-						{
-							auto regit = register_match.find(operand.str());
-							if (regit == end(register_match))
-							{
-								if (opinfo.is_register())
-								{
-									note(operand, "Error: Cannot use unrecognized identifier '" + operand.str() + "' as a register name");
-									return;
-								}
-								
-								note(operand, "Error: Macros are not implemented yet");
-								return;
-							}
-							else
-							{
-								if (!opinfo.is_register())
-								{
-									note(operand, "Error: Cannot use register name '" + operand.str() + "' as an immediate value");
-									return;
-								}
-								
-								ins.operand(opinfo.type, regit->second.id);
-							}
-						}
-						else if (operand.type == TokenType::Numeric)
-						{
-							if (opinfo.is_register())
-							{
-								note(operand, "Error: Cannot use numeric value '" + operand.str() + "' as a register name");
-								return;
-							}
-							
-							ins.operand(opinfo.type, _last_integer);
-						}
-						else
-						{
-							note(operand, "Error: Unexpected token '" + operand.str() + "' as an operand");
+						OperandInfo opinfo = op.info->operands[n];
+						if (!encode_operand(operand, n, opinfo, ins))
 							return;
-						}
 						
 						++n;
 					}
 					
-					if (n != opit->second.operands.size())
+					if (n != op.info->operands.size())
 					{
-						note(token, "Error: Missing operands to instruction '" + token.str() + "'");
+						note(token, "Error: Missing operands to instruction.");
 						return;
 					}
 					
@@ -205,9 +224,11 @@ namespace ntl
 					
 					continue; // Don't read an extra char
 				} break;
+				case TokenType::EndOfLine: // Cannot happen
 				case TokenType::Numeric:
+				case TokenType::Unknown:
 				default:
-					note(token, "Error: Unexpected token '" + token.str() + "'.");
+					note(token, "Error: Unexpected token.");
 					return;
 				}
 				

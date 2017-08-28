@@ -6,14 +6,12 @@ namespace ntl
 		instruction{static_cast<std::uint32_t>(opcode)}
 	{}
 	
-	void Instruction::operand(const OperandType type, const std::uint32_t value)
+	void Instruction::operand(const OperandType type, const std::uint32_t value, const std::size_t offset)
 	{
 		switch (type)
 		{
-		case R1:   instruction |= value <<  8; break;
-		case R2:   instruction |= value << 12; break;
-		case R3:   instruction |= value << 16; break;
-		case IMM1: instruction |= value << 16; break;
+		case REG: instruction |= value << (8 + (offset * 4)); break;
+		case IMM: instruction |= value << 16; break;
 		};
 	}
 }

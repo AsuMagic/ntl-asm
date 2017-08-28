@@ -32,6 +32,26 @@ namespace ntl
 		operator bool() const;
 	};
 	
+	struct Register
+	{
+		const RegisterInfo* info;
+		
+		Register(const std::string& name);
+		operator const RegisterInfo*() const;
+	};
+	
+	struct Opcode
+	{
+		const OpcodeInfo* info;
+		
+		Opcode(const std::string& name);
+		operator const OpcodeInfo*() const;
+	};
+	
+	bool asm_isnotidentifier(const char c);
+	bool asm_isnotdigit(const char c);
+	bool asm_canendnumeric(const char c);
+	
 	class Assembler
 	{
 		std::ifstream _source;
@@ -48,13 +68,11 @@ namespace ntl
 		
 		bool _completed = false;
 		
-		static bool asm_isnotidentifier(const char c);
-		static bool asm_isnotdigit(const char c);
-		static bool asm_canendnumeric(const char c);
-		
 		const std::string& current_line() const;
 		
 		void note(const Token& token, const std::string text) const;
+		
+		bool encode_operand(const Token& token, const std::size_t n, const OperandInfo opinfo, Instruction& instruction);
 		
 		char read_char();
 		Token read_token();
